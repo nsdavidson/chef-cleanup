@@ -1,5 +1,6 @@
 require 'chef'
 require 'json'
+require 'optparse'
 
 def output_list(list)
   list.each do |name, versions|
@@ -43,16 +44,24 @@ def get_unused_cookbooks(used_list, cb_list)
   unused_list
 end
 
-orgs = ARGV[0].split(',') || ['myorg']
-knife_config = ARGV[1] || "#{ENV['HOME']}/.chef/knife.rb"
-puts knife_config
+options = {}
+OptionParser.new do |opt|
+  opt.on('--orgs ORG1,ORG2') { |o| options[:org_list] = o }
+  opt.on('--node-threshold NUM_DAYS') { |o| options[:threshold_days] = o }
+  opt.on('--knife-config PATH_TO_KNIFE_RB') { |o| options[:knife_config] = o }
+end.parse!
+
+orgs = options[:org_list].split(',') || ['myorg']
+threshold_in_days = options[:threshold_days] || 30
+knife_config = options[:knife_config] || "#{ENV['HOME']}/.chef/knife.rb"
+
 Chef::Config.from_file(knife_config)
 
 chef_server_root = Chef::Config['chef_server_url'][/.*\//]
 stale_orgs = []
 orgs.each do |org|
   chef_endpoint = Chef::ServerAPI.new("#{chef_server_root}#{org}")
-  puts "Cookbook report for organization #{org}:"
+  puts "Processing organization #{org}..."
   cb_list = get_cookbook_list(chef_endpoint)
   version_count = get_cookbook_count(cb_list).sort_by(&:last).reverse.to_h
   output_list(version_count)
@@ -78,8 +87,7 @@ orgs.each do |org|
   end
   stale_nodes_hash = {'threshold_days': threshold_in_days, 'count': stale_nodes.count, 'list': stale_nodes}
   stale_orgs.push(org) if stale_nodes.count == nodes[0].count
-  # puts "Unused cookbooks: #{get_unused_cookbooks(used_cookbooks, cb_list)}"
-  # puts "Stale orgs: #{stale_orgs}"
+  Dir.mkdir('output') unless File.directory?('output')
   File.write("output/#{org}_unused_cookbooks.json", JSON.pretty_generate(get_unused_cookbooks(used_cookbooks, cb_list)))
   File.write("output/#{org}_cookbook_count.json", JSON.pretty_generate(version_count))
   File.write("output/#{org}_#{threshold_in_days}d_stale_nodes.json", JSON.pretty_generate(stale_nodes_hash))

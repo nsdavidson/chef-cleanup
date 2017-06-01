@@ -14,7 +14,7 @@ def get_cookbook_list(endpoint)
   cookbooks = endpoint.get_rest('/cookbooks?num_versions=all')
   cookbooks.each do |name, data|
     data['versions'].each do |version_hash|
-      version = version_hash['version']
+      version = Gem::Version.new(version_hash['version']).to_s
       if cb_list[name] && !cb_list[name].include?(version)
         cb_list[name].push(version)
       else
@@ -88,7 +88,7 @@ orgs.each do |org|
   #nodes[0].select{|node| node.class == Array}.each do |node|
   nodes[0].select{|node| !node['cookbooks'].nil?}.each do |node|
     node['cookbooks'].each do |name, version_hash|
-      version = version_hash['version']
+      version = Gem::Version.new(version_hash['version']).to_s
       if used_cookbooks[name] && !used_cookbooks[name].include?(version)
         used_cookbooks[name].push(version)
       else

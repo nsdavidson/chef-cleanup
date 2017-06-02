@@ -106,6 +106,7 @@ orgs.each do |org|
   stale_nodes_hash = {'threshold_days': threshold_in_days, 'count': stale_nodes.count, 'list': stale_nodes}
   stale_orgs.push(org) if stale_nodes.count == nodes[0].count
   Dir.mkdir('output') unless File.directory?('output')
+  File.write("output/#{org}_used_cookbooks.json", JSON.pretty_generate(used_cookbooks))
   File.write("output/#{org}_unused_cookbooks.json", JSON.pretty_generate(get_unused_cookbooks(used_cookbooks, cb_list)))
   File.write("output/#{org}_cookbook_count.json", JSON.pretty_generate(version_count))
   File.write("output/#{org}_#{threshold_in_days}d_stale_nodes.json", JSON.pretty_generate(stale_nodes_hash))

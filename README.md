@@ -1,3 +1,5 @@
+# Notice:  This script has been deprecated in favor of knife-tidy (https://github.com/jeremymv2/knife-tidy).
+
 ## Usage 
 ```
 chef exec ruby get_data.rb --orgs org1,org2 --node-threshold 45 --knife-config /home/myuser/.chef/knife.rb
